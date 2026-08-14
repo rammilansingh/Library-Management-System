@@ -4,8 +4,12 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import authroutes from "./routes/auth.routes.js"
+import bookroutes from "./routes/book.routes.js"
+// import connectCloudinary from "./config/cloudinary.js";
 
 dotenv.config();
+
+
 
 const app = express();
 
@@ -26,10 +30,16 @@ app.get("/",(req,res)=>{
 //DataBase Connection
 connectDB()
 
+//Cloudinary Connection
+// connectCloudinary()
+
 
 // Routes
 
-app.use("/api/auth",authroutes)
+app.use("/api/auth",authroutes);
+app.use("/api/book",bookroutes);
+
+
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT,()=>{
