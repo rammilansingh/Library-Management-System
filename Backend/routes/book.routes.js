@@ -5,6 +5,7 @@ import { createBook,
     getSingleBook,
 updateBook,
 deleteBook,
+getAdminDashboardStats
  } from "../controllers/book.controller.js";
 
 import { isAuthenticated, isAdmin } from "../middlewares/authMiddleware.js";
@@ -18,5 +19,6 @@ router.get("/all",getAllBooks);
 router.get("/:id",getSingleBook);
 router.put("/update/:id",isAuthenticated, isAdmin,upload.single("coverImage"),updateBook);
 router.delete("/delete/:id",isAuthenticated, isAdmin,deleteBook);
+router.get("/admin/dashboard",isAuthenticated, isAdmin,getAdminDashboardStats)
 
 export default router;
