@@ -4,111 +4,261 @@ import { axiosInstance } from "../utils/axiosInstance";
 
 export const AppContext = createContext();
 
-const AppContextProvider = ({children}) => {
-
+const AppContextProvider = ({ children }) => {
 
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState(null);
-    const [adminStats,setAdminStats] = useState();
-    const [books,setBooks] = useState([]);
-    const [students,setStudents] = useState([]);
-    const [borrowedBooks,setBorrowedBooks] = useState([]);
 
-    const isAdmin = user && user.role === "admin"
+    const [adminStats, setAdminStats] = useState();
+    const [studentStats, setStudentStats] = useState();
+
+    const [books, setBooks] = useState([]);
+    const [studentBooks, setStudentBooks] = useState([]);
+
+    const [students, setStudents] = useState([]);
+    const [borrowedBooks, setBorrowedBooks] = useState([]);
+
     const navigate = useNavigate();
 
-    const fetchUser = async()=>{
+    const isAdmin = user?.role === "admin";
+
+
+    // Fetch User
+
+    const fetchUser = async () => {
         try {
-            const {data} = await axiosInstance.get("/auth/me");
+
+            const { data } = await axiosInstance.get("/auth/me");
+
             if (data.success) {
-                setUser(data.user)
+                setUser(data.user);
             }
+
         } catch (error) {
-            setUser(null)
+
+            console.log("Error fetching user:", error);
+
+            setUser(null);
         }
-    }
+    };
 
 
-    
+    // Admin Dashboard
 
-    //Fetch Admin Dasboard Stats
+    const fetchAdminDashboardStats = async () => {
+        try {
 
-const fetchAdminDashboardStats = async()=>{
-    try {
-        const {data} = await axiosInstance.get("/books/admin/dashboard");
-        
-        if (data.success) {
-                setAdminStats(data)
+            const { data } = await axiosInstance.get(
+                "/books/admin/dashboard"
+            );
+
+            if (data.success) {
+                setAdminStats(data);
             }
-    } catch (error) {
-        console.log("error to fetch admin stats",error);
-    }
-}
 
-    //Fetch Books
+        } catch (error) {
 
-const fetchBooks = async()=>{
-    try {
-        const {data} = await axiosInstance.get("/books/all");
-        
-        if (data.success) {
-                setBooks(data.books)
+            console.log(
+                "Error fetching admin stats:",
+                error
+            );
+        }
+    };
+
+
+    // Student Dashboard
+
+    const fetchStudentDashboardStats = async () => {
+        try {
+
+            const { data } = await axiosInstance.get(
+                "/borrow/student/dashboard"
+            );
+
+            if (data.success) {
+                setStudentStats(data);
             }
-    } catch (error) {
-        console.log("error to fetch books",error);
-    }
-}
 
-// fetch students
+        } catch (error) {
 
-const fetchStudents = async()=>{
-    try {
-        const {data} = await axiosInstance.get("/admin/students");
-        
-        if (data.success) {
-                setStudents(data.students)
+            console.log(
+                "Error fetching student stats:",
+                error
+            );
+        }
+    };
+
+
+    // Fetch All Books
+
+    const fetchBooks = async () => {
+        try {
+
+            const { data } = await axiosInstance.get(
+                "/books/all"
+            );
+
+            if (data.success) {
+                setBooks(data.books || []);
             }
-    } catch (error) {
-        console.log("error to fetch students",error);
-    }
-}
 
-// fetch all borrowed books
+        } catch (error) {
 
-const fetchBorrowedBooks = async()=>{
-    try {
-        const {data} = await axiosInstance.get("/borrow/admin/all");
-        
-        if (data.success) {
-                setBorrowedBooks(data.records)
+            console.log(
+                "Error fetching books:",
+                error
+            );
+        }
+    };
+
+
+    // Fetch Student's Books
+
+    const fetchStudentBooks = async () => {
+        try {
+
+            const { data } = await axiosInstance.get(
+                "/borrow/my-books"
+            );
+
+            console.log("MY BOOKS RESPONSE:", data);
+
+            if (data.success) {
+                setStudentBooks(data.borrowedBooks || []);
             }
-    } catch (error) {
-        console.log("error to fetch borrowed books",error);
-    }
-}
 
-    useEffect(()=>{
-        fetchUser()
-        fetchBooks()
-       
-    },[])
+        } catch (error) {
 
-    useEffect(()=>{
-        if (isAdmin) {
+            console.log(
+                "Error fetching student books:",
+                error.response?.data || error
+            );
+
+            setStudentBooks([]);
+        }
+    };
+
+
+    // Fetch Students - Admin
+
+    const fetchStudents = async () => {
+        try {
+
+            const { data } = await axiosInstance.get(
+                "/admin/students"
+            );
+
+            if (data.success) {
+                setStudents(data.students || []);
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Error fetching students:",
+                error
+            );
+        }
+    };
+
+
+    // Fetch All Borrow Records - Admin
+
+    const fetchBorrowedBooks = async () => {
+        try {
+
+            const { data } = await axiosInstance.get(
+                "/borrow/admin/all"
+            );
+
+            if (data.success) {
+                setBorrowedBooks(data.records || []);
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Error fetching borrowed books:",
+                error
+            );
+        }
+    };
+
+
+    // First get user and books
+
+    useEffect(() => {
+
+        fetchUser();
+        fetchBooks();
+
+    }, []);
+
+
+    // Fetch data after user is available
+
+    useEffect(() => {
+
+        if (!user) {
+            return;
+        }
+
+
+        if (user.role === "student") {
+
+            fetchStudentDashboardStats();
+            fetchStudentBooks();
+
+        }
+
+
+        if (user.role === "admin") {
+
             fetchAdminDashboardStats();
-             fetchStudents()
-             fetchBorrowedBooks()
+            fetchStudents();
+            fetchBorrowedBooks();
+
         }
-    },[isAdmin])
 
-    const value = {loading,setLoading,user,setUser,navigate,adminStats,fetchAdminDashboardStats,
-        books,fetchBooks,students,fetchStudents,borrowedBooks,fetchBorrowedBooks}
+    }, [user]);
 
-    return(
+
+    const value = {
+
+        loading,
+        setLoading,
+
+        user,
+        setUser,
+
+        navigate,
+
+        adminStats,
+        fetchAdminDashboardStats,
+
+        studentStats,
+        fetchStudentDashboardStats,
+
+        books,
+        fetchBooks,
+
+        studentBooks,
+        fetchStudentBooks,
+
+        students,
+        fetchStudents,
+
+        borrowedBooks,
+        fetchBorrowedBooks,
+
+    };
+
+
+    return (
         <AppContext.Provider value={value}>
             {children}
         </AppContext.Provider>
-    )
-}
+    );
+};
 
 export default AppContextProvider;

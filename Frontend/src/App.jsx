@@ -17,6 +17,10 @@ import UpdateStudent from "./pages/admin/UpdateStudent.jsx";
 import BookBorrowed from "./pages/admin/BookBorrowed.jsx";
 import BookReturned from "./pages/admin/BookReturned.jsx";
 import OverdueBooks from "./pages/admin/OverdueBooks.jsx";
+import Layout from "./pages/student/Layout.jsx";
+import StudentDashboard from "./pages/student/StudentDashboard.jsx";
+import Books from "./pages/student/Books.jsx";
+import MyBooks from "./pages/student/MyBooks.jsx";
 
 const App = () => {
   const location = useLocation();
@@ -34,17 +38,26 @@ const App = () => {
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
-  <Route path="dashboard" element={<AdminDashboard />} />
-  <Route path="books" element={<BookList />} />
-  <Route path="add-book" element={<AddBook />} />
-  <Route path="book/update/:id" element={<UpdateBooks />} />
-  <Route path="borrowed-books" element={<BookBorrowed />} />
-  <Route path="returned-books" element={<BookReturned />} />
-  <Route path="overdue-books" element={<OverdueBooks />} />
-  <Route path="students" element={<StudentList />} />
-  <Route path="add-student" element={<AddStudent />} />
-  <Route path="student/update/:id" element={<UpdateStudent />} />
-</Route>
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="books" element={<BookList />} />
+        <Route path="add-book" element={<AddBook />} />
+        <Route path="book/update/:id" element={<UpdateBooks />} />
+        <Route path="borrowed-books" element={<BookBorrowed />} />
+        <Route path="returned-books" element={<BookReturned />} />
+        <Route path="overdue-books" element={<OverdueBooks />} />
+        <Route path="students" element={<StudentList />} />
+        <Route path="add-student" element={<AddStudent />} />
+        <Route path="student/update/:id" element={<UpdateStudent />} />
+
+        </Route>
+
+         {/* Admin Routes */}
+        <Route path="/student" element={<Layout />}>
+        <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="books" element={<Books />} />
+        <Route path="my-books" element={<MyBooks />} />
+
+        </Route>
       </Routes>
     </div>
   );
