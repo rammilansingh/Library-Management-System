@@ -55,7 +55,7 @@ export const bookSchema = new mongoose.Schema({
 
    addedBy:{
     type: String,
-    default: "Admin"
+    default: "admin"
    }
     
 

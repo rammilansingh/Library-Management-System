@@ -1,6 +1,6 @@
 import Book from "../models/book.model.js";
 import  cloudinary from "../config/cloudinary.js";
-
+import Borrow from "../models/borrow.model.js";
 // function to create book
 
 export const createBook = async(req,res)=>{
@@ -59,11 +59,11 @@ export const createBook = async(req,res)=>{
 
         return res.status(201).json({
             success: true,
-            message: "Book added Sucessfully.",
+            message: "Book added Successfully.",
             book,
         })
     } catch (error) {
-        return res.status(501).json({
+        return res.status(500).json({
             success: false,
             message: " Failed to create Book.",
             error: error.message,
@@ -116,7 +116,7 @@ export const getAllBooks = async(req,res)=>{
         const books = await Book.find(query).sort({createdAt:-1})
 
         return res.status(200).json({
-            sucess: true,
+            success: true,
             count: books.length,
             books,
         })
@@ -144,7 +144,7 @@ export const getSingleBook = async(req,res)=>{
         }
 
         return res.status(200).json({
-            sucess: true,
+            success: true,
             book,
         })
 
@@ -159,9 +159,9 @@ export const getSingleBook = async(req,res)=>{
 
 // UPDATE BOOK
 
-export const updateBook = async(req,res)=>{
+export const updateBook = async (req, res) => {
     try {
-        const{
+        const {
             title,
             description,
             category,
@@ -171,54 +171,84 @@ export const updateBook = async(req,res)=>{
         } = req.body;
 
         let book = await Book.findById(req.params.id);
-        if(!book){
+
+        if (!book) {
             return res.status(404).json({
                 success: false,
                 message: "Book not found."
-            })
+            });
         }
 
         let updatedData = {};
-        if(title !== undefined) updatedData.title = title
-        if(description !== undefined) updatedData.description = description
-        if(category !== undefined) updatedData.category = category
-        if(language !== undefined) updatedData.language = language
-        if(totalCopies !== undefined) updatedData.totalCopies = totalCopies
-        if(availableCopies !== undefined) updatedData.availableCopies = availableCopies
 
-        // IF NEW IMAGE UPLOADED
-        if(req.file){
-            if(book.coverImage?.public_id){
-                await cloudinary.uploader.upload(book.coverImage.public_id)
+        if (title !== undefined)
+            updatedData.title = title;
+
+        if (description !== undefined)
+            updatedData.description = description;
+
+        if (category !== undefined)
+            updatedData.category = category;
+
+        if (language !== undefined)
+            updatedData.language = language;
+
+        if (totalCopies !== undefined)
+            updatedData.totalCopies = totalCopies;
+
+        if (availableCopies !== undefined)
+            updatedData.availableCopies = availableCopies;
+
+        // IF NEW IMAGE IS UPLOADED
+        if (req.file) {
+
+            // Delete old image from Cloudinary
+            if (book.coverImage?.public_id) {
+                await cloudinary.uploader.destroy(
+                    book.coverImage.public_id
+                );
             }
-            const result = await cloudinary.uploader.upload(req.file.path,{
-            folder:"library_collection"
-        })
-        updatedData.coverImage = {
-            public_id: result.public_id,
-            url: result.secure_url
+
+            // Upload new image
+            const result = await cloudinary.uploader.upload(
+                req.file.path,
+                {
+                    folder: "library_collection"
+                }
+            );
+
+            updatedData.coverImage = {
+                public_id: result.public_id,
+                url: result.secure_url
+            };
         }
-        }
-        book = await Book.findByIdAndUpdate(req.params.id,updatedData,{
-            new: true,
-            runValidators: true
+
+        book = await Book.findByIdAndUpdate(
+            req.params.id,
+            updatedData,
+            {
+                new: true,
+                runValidators: true
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Book updated successfully.",
+            book
         });
 
-
-            return res.status(200).json({
-                success : true,
-                message : "Book updated successfully.",
-                book,
-            })
-
     } catch (error) {
-       return res.status(501).json({
+
+        console.log("Update book error:", error);
+
+        return res.status(500).json({
             success: false,
-            message: " Failed to update Books.",
-            error: error.message,
-        })    
+            message: "Failed to update book.",
+            error: error.message
+        });
     }
-}
+};
 
 
 // DELETE BOOK
@@ -236,6 +266,22 @@ export const deleteBook = async(req,res)=>{
             })
         }
 
+        const activeBorrow = await Borrow.findOne({
+            book: book._id,
+            "status" : "borrowed"
+        })
+
+        if(activeBorrow){
+            return res.status(400).json({
+                success: false,
+                message: "Can't delete book because it is currently borrowed by a student."
+            })
+        }
+
+        if (book.coverImage?.public_id) {
+            await cloudinary.uploader.destroy(book.coverImage.public_id);
+        }
+
         await book.deleteOne();
 
         return res.status(200).json({
@@ -249,5 +295,60 @@ export const deleteBook = async(req,res)=>{
             message: " Failed to delete Books.",
             error: error.message,
         })    
+    }
+}
+
+
+// ADMIN DASHBOARD STATS
+
+export const getAdminDashboardStats = async(req,res)=>{
+    try {
+        
+        const totalBooks = await Book.countDocuments();
+        const totalBorrowedRecords = await Borrow.countDocuments();
+        const borrowedBooksCount = await Borrow.countDocuments({
+            status: "borrowed"
+        });
+
+        const returnedBooksCount = await Borrow.countDocuments({
+            status: "retuned"
+        });
+
+        const overdueBooksCount = await Borrow.countDocuments({
+            status: "borrowed",
+            dueDate: {$lt: new Date()}
+        });
+
+        const books = await Book.find();
+
+        const totalCopies = books.reduce((sum, book)=> sum + book.totalCopies,0);
+        const availableCopies = books.reduce((sum, book)=> sum + book.availableCopies,0);
+
+        const recentBorrows = await Borrow.find()
+        .populate("student" , "name email")
+        .populate("book", "title category")
+        .sort({createdAt: -1})
+        .limit(5);
+
+        return res.status(200).json({
+            success: true,
+            stats: {
+                totalBooks,
+                totalCopies,
+                availableCopies,
+                borrowedBooksCount,
+                overdueBooksCount,
+                returnedBooksCount,
+                totalBorrowedRecords
+            },
+            recentBorrows
+        })
+
+    } catch (error) {
+        return res.status(501).json({
+            success: false,
+            message: " Failed to fetch Admin dashboard stats.",
+            error: error.message,
+        }) 
     }
 }

@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import authroutes from "./routes/auth.routes.js"
 import bookroutes from "./routes/book.routes.js"
+import borrowroutes from "./routes/borrow.route.js"
+import adminroutes from "./routes/admin.routes.js"
 // import connectCloudinary from "./config/cloudinary.js";
 
 dotenv.config();
@@ -37,8 +39,9 @@ connectDB()
 // Routes
 
 app.use("/api/auth",authroutes);
-app.use("/api/book",bookroutes);
-
+app.use("/api/bookS",bookroutes);
+app.use("/api/borrow",borrowroutes);
+app.use("/api/admin",adminroutes);
 
 const PORT = process.env.PORT || 5000
 

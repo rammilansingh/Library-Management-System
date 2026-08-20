@@ -210,10 +210,12 @@ export const forgetPassword = async(req,res)=>{
         user.resetPasswordExpire = Date.now() + 15 * 60 * 1000  // 15 minutes
 
         await user.save({validateBeforeSave:false});
+ //create reset URL
 
-        //create reset URL
-        const resetUrl =`${process.env.FRONTEND_URL}/reset-password/${resetToken}`
-        // Email message
+
+ const resetUrl =`${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+ 
+ // Email message
 const message = `
 Hello,
 
@@ -231,12 +233,40 @@ Regards,
 Library Management System Team
 `;
 
+const html = `<div style="font-family: arial, sans-serif; line-height: 1.6;">
+<h2>Password Reset Request</h2>
+<p> Click the button below to reset password</p>
+<a
+        href="${resetUrl}"
+        style="
+            display: inline-block;
+            padding: 12px 20px;
+            background: black;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        "
+    >
+        Reset Password
+    </a>
+
+    <p style="margin-top: 20px;">
+        This link will expire in 15 minutes.
+    </p>
+
+    <p>
+        If you did not request this, please ignore this email.
+    </p>
+</div>`
+
 try {
     
     await sendEmail({
         email:user.email,
         subject:"Password Reset",
-        message
+        message,
+        html
     })
     return res.status(200).json({
         success:true,
