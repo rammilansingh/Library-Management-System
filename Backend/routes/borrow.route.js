@@ -13,9 +13,8 @@ import { isAuthenticated, isAdmin } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
 // Student
-
 router.post("/borrow",isAuthenticated,borrowBook);
-router.post("/borrow",isAuthenticated,borrowBook);
+router.post("/return", isAuthenticated, returnBook);
 router.get("/my-books",isAuthenticated,getMyBorrowedBook);
 router.get("/student/dashboard",isAuthenticated,getStudentDashboard);
 
