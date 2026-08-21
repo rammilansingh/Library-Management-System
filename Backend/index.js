@@ -20,10 +20,15 @@ app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 
 app.use(cookieParser())
+// app.use(cors({
+//     origin:process.env.FRONTEND_URL,
+//     credentials:true
+// }))
+
 app.use(cors({
-    origin:process.env.FRONTEND_URL,
-    credentials:true
-}))
+    origin: "https://library-management-system-raw15.vercel.app",
+    credentials: true
+}));
 
 app.get("/",(req,res)=>{
     res.json({message:"Hello From Server."})

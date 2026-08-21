@@ -6,12 +6,12 @@ import crypto from "crypto";
 import sendEmail from "../utils/sendEmails.js";
 
 // cookie options  
-const cookieOPtions={
-    httpOnly:true,
-    secure:false,
-    sameSite:"strict",
+const cookieOPtions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000
-}
+};
 
 // Student Register
 
