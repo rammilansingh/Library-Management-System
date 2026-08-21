@@ -30,6 +30,12 @@ const App = () => {
       <Toaster />
 
       <Routes>
+
+        <Route
+         path="/"
+         element={<Navigate to="/login" replace />}
+        />
+        
         {/* Auth Routes */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
