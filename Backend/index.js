@@ -39,7 +39,7 @@ connectDB()
 // Routes
 
 app.use("/api/auth",authroutes);
-app.use("/api/bookS",bookroutes);
+app.use("/api/books",bookroutes);
 app.use("/api/borrow",borrowroutes);
 app.use("/api/admin",adminroutes);
 
