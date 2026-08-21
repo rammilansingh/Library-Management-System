@@ -1,19 +1,14 @@
 import React, { useContext } from "react";
 import { AppContext } from "../../context/AppContext";
-import {
-  Eye,
-  EyeIcon,
-  RotateCcw,
-  Trash2Icon,
-} from "lucide-react";
+import { EyeIcon, RotateCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../../utils/axiosInstance";
 
 const BookBorrowed = () => {
   const {
-    borrows,
+    borrowedBooks,
     loading,
-    fetchBorrowed,
+    fetchBorrowedBooks,
     navigate,
   } = useContext(AppContext);
 
@@ -23,8 +18,11 @@ const BookBorrowed = () => {
 
   const returnBook = async (id) => {
     try {
-      const { data } = await axiosInstance.put(
-        `/borrows/return/${id}`
+      const { data } = await axiosInstance.post(
+        "/borrow/return",
+        {
+          borrowId: id,
+        }
       );
 
       if (data.success) {
@@ -32,7 +30,11 @@ const BookBorrowed = () => {
           data.message || "Book returned successfully"
         );
 
-        await fetchBorrowed();
+        await fetchBorrowedBooks();
+      } else {
+        toast.error(
+          data.message || "Failed to return book"
+        );
       }
     } catch (error) {
       console.log("Error returning book:", error);
@@ -104,10 +106,9 @@ const BookBorrowed = () => {
   return (
     <div className="w-full">
 
-      {/*HEADER*/}
+      {/* HEADER */}
 
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row
-        sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
           <h2 className="text-2xl font-bold text-gray-800">
@@ -119,82 +120,107 @@ const BookBorrowed = () => {
           </p>
         </div>
 
-        <div className="rounded-lg bg-black px-4 py-2.5
-          text-sm font-medium text-white">
-          Total: {borrows?.length || 0}
+        <div className="rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white">
+          Total: {borrowedBooks?.length || 0}
         </div>
+
       </div>
 
       {/* STATS */}
 
-      <div className="mb-6 grid grid-cols-1 gap-4
-        sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-        {/* Total */}
+        {/* TOTAL */}
 
-        <div className="rounded-xl border border-gray-200
-          bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
 
           <p className="text-sm text-gray-500">
             Total Borrowed Books
           </p>
 
           <h3 className="mt-2 text-2xl font-bold text-gray-800">
-            {borrows?.length || 0}
+            {borrowedBooks?.length || 0}
           </h3>
+
         </div>
 
-        {/* Borrowed */}
+        {/* CURRENTLY BORROWED */}
 
-        <div className="rounded-xl border border-gray-200
-          bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
 
           <p className="text-sm text-gray-500">
             Currently Borrowed Books
           </p>
 
           <h3 className="mt-2 text-2xl font-bold text-blue-600">
-            {
-              borrows?.filter(
-                (item) =>
-                  getStatus(item).toLowerCase() ===
-                  "borrowed"
-              ).length || 0
-            }
+            {borrowedBooks?.filter(
+              (item) =>
+                getStatus(item).toLowerCase() === "borrowed"
+            ).length || 0}
           </h3>
+
         </div>
 
+        {/* RETURNED */}
 
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
 
-        
+          <p className="text-sm text-gray-500">
+            Returned Books
+          </p>
+
+          <h3 className="mt-2 text-2xl font-bold text-green-600">
+            {borrowedBooks?.filter(
+              (item) =>
+                getStatus(item).toLowerCase() === "returned"
+            ).length || 0}
+          </h3>
+
+        </div>
+
+        {/* OVERDUE */}
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+
+          <p className="text-sm text-gray-500">
+            Overdue Books
+          </p>
+
+          <h3 className="mt-2 text-2xl font-bold text-red-600">
+            {borrowedBooks?.filter(
+              (item) =>
+                getStatus(item).toLowerCase() === "overdue"
+            ).length || 0}
+          </h3>
+
+        </div>
+
       </div>
 
-      {/* TABLE*/}
+      {/* TABLE */}
 
-      <div className="rounded-2xl border border-gray-200
-        bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
 
         {loading ? (
 
-          /* Loading */
+          /* LOADING */
 
           <div className="py-16 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin
-              rounded-full border-4 border-gray-300
-              border-t-black">
-            </div>
+
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-black"></div>
 
             <p className="mt-3 text-sm text-gray-500">
               Loading borrowed books...
             </p>
+
           </div>
 
-        ) : !borrows || borrows.length === 0 ? (
+        ) : !borrowedBooks ||
+          borrowedBooks.length === 0 ? (
 
-          /* Empty */
+          /* EMPTY */
 
-          <div className="rounded-xl bg-gray-50 py-16
-            text-center">
+          <div className="rounded-xl bg-gray-50 py-16 text-center">
 
             <p className="text-sm font-medium text-gray-600">
               No borrowed books found.
@@ -203,20 +229,20 @@ const BookBorrowed = () => {
             <p className="mt-1 text-xs text-gray-400">
               Books borrowed by students will appear here.
             </p>
+
           </div>
 
         ) : (
 
-          /* Table */
+          /* TABLE */
 
           <div className="overflow-x-auto">
 
-            <table className="min-w-full
-              border-separate border-spacing-y-3">
+            <table className="min-w-full border-separate border-spacing-y-3">
 
               <thead>
-                <tr className="text-left text-sm
-                  text-gray-500">
+
+                <tr className="text-left text-sm text-gray-500">
 
                   <th className="px-4 py-2">
                     Student
@@ -243,34 +269,32 @@ const BookBorrowed = () => {
                   </th>
 
                 </tr>
+
               </thead>
 
               <tbody>
 
-                {borrows.map((item) => {
+                {borrowedBooks.map((item) => {
 
                   const status = getStatus(item);
 
                   return (
                     <tr
                       key={item._id}
-                      className="rounded-xl bg-gray-100
-                      text-sm"
+                      className="rounded-xl bg-gray-100 text-sm"
                     >
 
                       {/* STUDENT */}
 
                       <td className="rounded-l-xl px-4 py-4">
 
-                        <div className="font-medium
-                          text-gray-800">
+                        <div className="font-medium text-gray-800">
                           {item.student?.name ||
                             item.user?.name ||
                             "Unknown Student"}
                         </div>
 
-                        <div className="mt-1 text-xs
-                          text-gray-500">
+                        <div className="mt-1 text-xs text-gray-500">
                           {item.student?.email ||
                             item.user?.email ||
                             ""}
@@ -282,35 +306,27 @@ const BookBorrowed = () => {
 
                       <td className="px-4 py-4">
 
-                        <div className="flex items-center
-                          gap-3">
+                        <div className="flex items-center gap-3">
 
                           {item.book?.coverImage?.url && (
                             <img
-                              src={
-                                item.book.coverImage.url
-                              }
-                              alt={
-                                item.book.title ||
-                                "Book"
-                              }
-                              className="h-12 w-9 rounded
-                              object-cover"
+                              src={item.book.coverImage.url}
+                              alt={item.book.title || "Book"}
+                              className="h-12 w-9 rounded object-cover"
                             />
                           )}
 
                           <div>
-                            <p className="font-medium
-                              text-gray-800">
+
+                            <p className="font-medium text-gray-800">
                               {item.book?.title ||
                                 "Unknown Book"}
                             </p>
 
-                            <p className="mt-1 text-xs
-                              text-gray-500">
-                              {item.book?.category ||
-                                ""}
+                            <p className="mt-1 text-xs text-gray-500">
+                              {item.book?.category || ""}
                             </p>
+
                           </div>
 
                         </div>
@@ -322,7 +338,7 @@ const BookBorrowed = () => {
                       <td className="px-4 py-4 text-gray-600">
                         {formatDate(
                           item.borrowDate ||
-                          item.createdAt
+                            item.createdAt
                         )}
                       </td>
 
@@ -337,9 +353,9 @@ const BookBorrowed = () => {
                       <td className="px-4 py-4">
 
                         <span
-                          className={`inline-flex rounded-full
-                          px-3 py-1 text-xs font-medium
-                          ${getStatusClass(status)}`}
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                            status
+                          )}`}
                         >
                           {status}
                         </span>
@@ -350,8 +366,7 @@ const BookBorrowed = () => {
 
                       <td className="rounded-r-xl px-4 py-4">
 
-                        <div className="flex items-center
-                          gap-3">
+                        <div className="flex items-center gap-3">
 
                           {/* VIEW */}
 
@@ -363,8 +378,7 @@ const BookBorrowed = () => {
                               )
                             }
                             title="View"
-                            className="text-gray-600
-                            hover:text-black"
+                            className="text-gray-600 hover:text-black"
                           >
                             <EyeIcon className="h-5 w-5" />
                           </button>
@@ -379,12 +393,9 @@ const BookBorrowed = () => {
                                 returnBook(item._id)
                               }
                               title="Return Book"
-                              className="text-green-600
-                              hover:text-green-700"
+                              className="text-green-600 hover:text-green-700"
                             >
-                              <RotateCcw
-                                className="h-5 w-5"
-                              />
+                              <RotateCcw className="h-5 w-5" />
                             </button>
                           )}
 
@@ -399,9 +410,13 @@ const BookBorrowed = () => {
               </tbody>
 
             </table>
+
           </div>
+
         )}
+
       </div>
+
     </div>
   );
 };
